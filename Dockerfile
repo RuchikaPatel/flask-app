@@ -1,14 +1,31 @@
+#------------------ STAGE 1 --------------------------
 # Base Image
-FROM python:3.9
+FROM python:3.9 AS backend-builder
 
-# Current working directory
+# Set working directory
 WORKDIR /app
 
-#Copy the source file to the container's working directory
+# Copy the source files to the container's working directory
 COPY . .
 
-# install all the required dependencies (that is mentioned in requirments.txt)
+# Install dependencies
 RUN pip install -r requirements.txt
 
-# Run the python app
-CMD ["python","run.py"] 
+# ------------------- STAGE 2 ----------------------------
+FROM python:3.9-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy installed Python packages from the backend-builder stage
+COPY --from=backend-builder /usr/local/lib/python3.9/site-packages/ /usr/local/lib/python3.9/site-packages/
+
+# Copy application files
+COPY --from=backend-builder /app /app
+
+# Expose port if needed
+#EXPOSE 5000
+
+# Run the Python application
+CMD ["python", "run.py"]
+
